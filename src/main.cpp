@@ -14,7 +14,18 @@
 #define trigPin 0
 #define echoPin 0
 
+//encoder counters
+volatile long encoder1Count = 0;
+volatile long encoder2Count = 0;
+
 float duration, distance;
+
+void stopmotors() {
+  digitalWrite(motorRforward, LOW);
+  digitalWrite(motorRbackward, LOW);
+  digitalWrite(motorLforward, LOW);
+  digitalWrite(motorLbackward, LOW);  
+}
 
 void move_forward() {
   digitalWrite(motorRforward, HIGH);
@@ -60,8 +71,75 @@ float read_sonar() {
   return distance;
 }
 
+void encoder1ISR() {
+  int stateM1C1 = digitalRead(EncoderPin1A);
+  int stateM1C2 = digitalRead(EncoderPin1B);
+
+  if (stateM1C1 == stateM1C2) {
+    encoder1Count--;
+  }
+  else {
+    encoder1Count++;
+  }
+}
+void encoder2ISR() {
+  int stateM2C1 = digitalRead(EncoderPin2A);
+  int stateM2C2 = digitalRead(EncoderPin2B);
+
+  if (stateM2C1==stateM2C2) {
+    encoder2Count--;
+  }
+  else {
+    encoder2Count++;
+  }
+}
+
+void go_distance(float dist) {
+  float steps = dist * 200;
+  long startstep1 = encoder1Count;
+  //long startstep2 = encoder2Count;
+  long goalstep1 = startstep1 + (long)steps;
+  //long goalstep2 = startstep2 + steps;
+  if (goalstep1 != encoder1Count) {
+    if (steps > 0) {
+      move_forward;
+    }
+    else{
+      move_backward;
+    }
+  }
+  else {
+    stopmotors();
+  }
+}
+
+void turn_radians(float radians) {
+  //SET TURN RADIUS HERE BASED OFF OF DISTANCE BETWEEN WHEELS
+  float turn_radius = 8;
+
+  float turn_dist = turn_radius * radians;
+  float steps = turn_dist * 200;
+
+  long startstep1 = encoder1Count;
+
+  long goalstep1 = startstep1 + (long)steps;
+  if (goalstep1 != encoder1Count) {
+    if (steps>0) {
+      turn_left;
+    }
+    else{
+      turn_right;
+    }
+  }
+  else{
+    stopmotors;
+  }
+
+}
 
 void setup() {
+  Serial.begin(115200);
+
   // set up motor pins
   pinMode(motorRforward, OUTPUT);
   pinMode(motorRbackward, OUTPUT);
@@ -72,18 +150,18 @@ void setup() {
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   
-  Serial.begin(9600);
+  //encoder
+  pinMode(EncoderPin1A, INPUT_PULLUP);
+  pinMode(EncoderPin1B, INPUT_PULLUP);
+  pinMode(EncoderPin2A, INPUT_PULLUP);
+  pinMode(EncoderPin2B, INPUT_PULLUP);
+
+  attachInterrupt(digitalPinToInterrupt(EncoderPin1A), encoder1ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(EncoderPin2A), encoder2ISR, CHANGE);
 
 }
 
 void loop() {
-  /*
-  turn_left();
-  delay(500);
-  turn_right();
-  delay(1000);
-  */
 
-  //read_sonar();
 
 }
