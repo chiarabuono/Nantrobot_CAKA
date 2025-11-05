@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 #define EncoderPin1A 22
 #define EncoderPin1B 23
 #define motorRforward 19

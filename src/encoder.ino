@@ -30,7 +30,7 @@ void loop(){
 
     long currentCount = encoderCount;  // Read volatile variable once
     digitalWrite(M1,LOW);
-    anologWrite(M2,80);
+    analogWrite(M2,80);
 
     Serial.print("Count: ");
     Serial.print(currentCount);
