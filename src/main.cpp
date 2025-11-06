@@ -94,26 +94,37 @@ void encoder2ISR() {
   }
 }
 
-void go_distance(float dist) {
+float go_distance(float dist) {
   float steps = dist * 200;
   long startstep1 = encoder1Count;
   //long startstep2 = encoder2Count;
   long goalstep1 = startstep1 + (long)steps;
   //long goalstep2 = startstep2 + steps;
-  if (goalstep1 != encoder1Count) {
-    if (steps > 0) {
+  if(steps > 0){
+    if(goalstep1 < encoder1Count) {
       move_forward;
     }
     else{
-      move_backward;
+      stopmotors;
     }
   }
-  else {
-    stopmotors();
+  else if(steps<0){
+    if(goalstep1>encoder1Count) {
+      move_backward;
+    }
+    else{
+      stopmotors;
+    }
   }
+  else{
+    stopmotors;
+  }
+  delay(50);
+  float dist_moved = (encoder1Count - startstep1) / 200;
+  return dist_moved;
 }
 
-void turn_radians(float radians) {
+float turn_radians(float radians) {
   //SET TURN RADIUS HERE BASED OFF OF DISTANCE BETWEEN WHEELS
   float turn_radius = 8;
 
@@ -134,7 +145,9 @@ void turn_radians(float radians) {
   else{
     stopmotors;
   }
-
+  delay(50);
+  float rad_turned = (encoder1Count- startstep1) / (200 * turn_radius); 
+  return rad_turned;
 }
 
 void setup() {
@@ -158,10 +171,15 @@ void setup() {
 
   attachInterrupt(digitalPinToInterrupt(EncoderPin1A), encoder1ISR, CHANGE);
   attachInterrupt(digitalPinToInterrupt(EncoderPin2A), encoder2ISR, CHANGE);
+  
+  
 
 }
 
+float distance_to_move = 5;
+float radians_to_turn = 0;
+
 void loop() {
-
-
+  distance_to_move = distance_to_move - go_distance(distance_to_move);
+  radians_to_turn = radians_to_turn - turn_radians(radians_to_turn);
 }
