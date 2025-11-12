@@ -181,5 +181,5 @@ float radians_to_turn = 0;
 
 void loop() {
   distance_to_move = distance_to_move - go_distance(distance_to_move);
-  radians_to_turn = radians_to_turn - turn_radians(radians_to_turn);
+  //radians_to_turn = radians_to_turn - turn_radians(radians_to_turn);
 }
