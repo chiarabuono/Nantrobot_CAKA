@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <math.h>
+#include "ObstacleAvoidance.h"
 
 #define EncoderPin1A 22
 #define EncoderPin1B 23
@@ -12,15 +13,7 @@
 #define motorLbackward 17
 
 float const pi = 3.141592653589793;
-int avoidance_state = 0;
-
-int state = 1;
-/*
-  state 0: no obstacles - go straight ahead
-  state 1: obstacles - turning
-  state 2: turned enough, go straight ahead for a second
-  state 3: align again with the target
-*/
+int avoidance_state = 1;
 
 // sonar pins
 #define trigPin 0
@@ -30,7 +23,6 @@ float duration, distance;
 float distance_to_move = 0.0;
 float radians_to_turn = 0.0;
 float safe_dist = 15;     // [cm]
-float prev_dist = 0;      // [cm] obstacle from the robot
 
 struct point {
   float x;
@@ -100,14 +92,10 @@ float read_sonar() {
   distance = duration*0.0343/2;
   Serial.print("Distance: ");
   Serial.println(distance);
-  // delay(100);
 
   return distance;
 }
 
-void obstacle_avoidance() {
-
-}
 
 
 void setup() {
@@ -138,7 +126,7 @@ void loop() {
   switch (avoidance_state){
     case 0:
       if (dist < safe_dist) {
-        avoidance_state = 1;
+        avoidance_state = 2;
       break;
       }
       go_to_target();
@@ -147,14 +135,18 @@ void loop() {
     case 1:
       obstacle_avoidance();
       break;
+
+    case 2:
+      delay(1000);
+      if (dist < safe_dist) {
+        avoidance_state = 1;
+      }
+  }
+
+  // #TODO Do it in the right way (consider tollarance)
+  if (robot_pos.x == destination_point.x and robot_pos.y == destination_point.y) {
+    stopmotors();
   }
   
 
 }
-
-/*
-  state 0: no obstacles - go straight ahead
-  state 1: obstacles - turning
-  state 2: turned enough, go straight ahead for a second
-  state 3: align with the target
-*/
