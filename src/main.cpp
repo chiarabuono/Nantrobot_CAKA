@@ -134,18 +134,18 @@ float turn_radians(float radians) {
   long startstep1 = encoder1Count;
 
   long goalstep1 = startstep1 + (long)steps;
-  if (goalstep1 != encoder1Count) {
-    if (steps>0) {
+  if (steps>0) {
+    while(goalstep1 > encoder1Count) {
       turn_left;
-    }
-    else{
-      turn_right;
+      delay(50);
     }
   }
   else{
-    stopmotors;
+    while(goalstep1 < encoder1Count) {
+      turn_right;
+      delay(50);
+    }
   }
-  delay(50);
   float rad_turned = (encoder1Count- startstep1) / (200 * turn_radius); 
   return rad_turned;
 }
