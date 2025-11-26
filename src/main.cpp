@@ -27,31 +27,31 @@ void stopmotors() {
   digitalWrite(motorLbackward, LOW);  
 }
 
-void move_forward() {
-  digitalWrite(motorRforward, HIGH);
+void move_forward(int speed = 255) {
+  digitalWrite(motorRforward, speed);
   digitalWrite(motorRbackward, LOW);
-  digitalWrite(motorLforward, HIGH);
+  digitalWrite(motorLforward, speed);
   digitalWrite(motorLbackward, LOW);  
 }
 
-void move_backward() {
+void move_backward(int speed = 255) {
   digitalWrite(motorRforward, LOW);
-  digitalWrite(motorRbackward, HIGH);
+  digitalWrite(motorRbackward, speed);
   digitalWrite(motorLforward, LOW);
-  digitalWrite(motorLbackward, HIGH);
+  digitalWrite(motorLbackward, speed);
 }
 
 void turn_left() {
-  digitalWrite(motorRforward, HIGH);
+  digitalWrite(motorRforward, 100);
   digitalWrite(motorRbackward, LOW);
   digitalWrite(motorLforward, LOW);
-  digitalWrite(motorLbackward, HIGH);
+  digitalWrite(motorLbackward, 100);
 }
 
 void turn_right() {
   digitalWrite(motorRforward, LOW);
-  digitalWrite(motorRbackward, HIGH);
-  digitalWrite(motorLforward, HIGH);
+  digitalWrite(motorRbackward, 100);
+  digitalWrite(motorLforward, 100);
   digitalWrite(motorLbackward, LOW);
 }
 
@@ -94,59 +94,76 @@ void encoder2ISR() {
   }
 }
 
-float go_distance(float dist) {
+float go_distance(float dist) {     // dist: [cm]
   float steps = dist * 200;
+  int speed = 0;
+  if (dist < 4) {
+    speed = (dist/4) * 20;
+  }
+  else {
+    speed = 20;
+  }
   long startstep1 = encoder1Count;
+  int k = 0;                      // delta of 0.5 cm
   //long startstep2 = encoder2Count;
   long goalstep1 = startstep1 + (long)steps;
   //long goalstep2 = startstep2 + steps;
   if(steps > 0){
-    if(goalstep1 < encoder1Count) {
-      move_forward;
+    if(goalstep1 - encoder1Count > k) {
+      move_forward(speed);
     }
     else{
-      stopmotors;
+      stopmotors();
     }
   }
-  else if(steps<0){
-    if(goalstep1>encoder1Count) {
-      move_backward;
+  else if(steps < 0){
+    if(encoder1Count - goalstep1 > k) {
+      //Serial.print("goalstep1: ");
+      //Serial.println(goalstep1);
+      move_backward(speed);
     }
     else{
-      stopmotors;
+      stopmotors();
     }
   }
   else{
-    stopmotors;
+    stopmotors();
   }
-  delay(50);
+  delay(40);
   float dist_moved = (encoder1Count - startstep1) / 200;
   return dist_moved;
 }
 
 float turn_radians(float radians) {
   //SET TURN RADIUS HERE BASED OFF OF DISTANCE BETWEEN WHEELS
+  
   float turn_radius = 8;
 
-  float turn_dist = turn_radius * radians;
+  float turn_dist = - turn_radius * radians;
   float steps = turn_dist * 200;
+  //float k = 50;
 
   long startstep1 = encoder1Count;
 
   long goalstep1 = startstep1 + (long)steps;
-  if (steps>0) {
+  if (steps > 0) {
     while(goalstep1 > encoder1Count) {
-      turn_left;
-      delay(50);
+      turn_right();
+
+      Serial.print("[A] Angle: ");
+      Serial.println((encoder1Count - goalstep1) / (200 * turn_radius));
+      delay(40);
     }
   }
   else{
     while(goalstep1 < encoder1Count) {
-      turn_right;
-      delay(50);
+      Serial.print("[B] Angle: ");
+      Serial.println((encoder1Count - goalstep1) / (200 * turn_radius));
+      turn_left();
+      delay(40);
     }
   }
-  float rad_turned = (encoder1Count- startstep1) / (200 * turn_radius); 
+  float rad_turned = -(encoder1Count- startstep1) / (200 * turn_radius); 
   return rad_turned;
 }
 
@@ -176,10 +193,17 @@ void setup() {
 
 }
 
-float distance_to_move = 5;
-float radians_to_turn = 0;
+float distance_to_move = -10;
+float radians_to_turn = -3.14/2;
 
 void loop() {
-  distance_to_move = distance_to_move - go_distance(distance_to_move);
-  //radians_to_turn = radians_to_turn - turn_radians(radians_to_turn);
+  
+  //distance_to_move = distance_to_move + go_distance(distance_to_move);
+  //Serial.print("Distance: ");
+  //Serial.println(distance_to_move);
+  
+  float radians_turned = turn_radians(radians_to_turn);
+  Serial.print(radians_turned);
+  radians_to_turn = 0;
+  
 }
